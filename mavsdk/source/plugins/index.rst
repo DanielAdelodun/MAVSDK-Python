@@ -35,3 +35,7 @@ Plugins
    tune
    camera_server
    rtk
+   ftp_server
+   gripper
+   lights
+   winch

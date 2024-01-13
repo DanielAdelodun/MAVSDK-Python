@@ -36,6 +36,7 @@ from . import telemetry_server
 from . import tracking_server
 from . import transponder
 from . import tune
+from . import lights
 
 from . import bin
 
@@ -159,6 +160,7 @@ class System:
         self._plugins["tracking_server"] = tracking_server.TrackingServer(plugin_manager)
         self._plugins["transponder"] = transponder.Transponder(plugin_manager)
         self._plugins["tune"] = tune.Tune(plugin_manager)
+        self._plugins["lights"] = lights.Lights(plugin_manager)
 
     @staticmethod
     def error_uninitialized(plugin_name: str) -> str:
@@ -350,6 +352,12 @@ class System:
         if "tune" not in self._plugins:
             raise RuntimeError(self.error_uninitialized("Tune"))
         return self._plugins["tune"]
+    
+    @property
+    def lights(self) -> lights.Lights:
+        if "lights" not in self._plugins:
+            raise RuntimeError(self.error_uninitialized("Lights"))
+        return self._plugins["lights"]
 
     @staticmethod
     def _start_mavsdk_server(system_address, port, sysid, compid):

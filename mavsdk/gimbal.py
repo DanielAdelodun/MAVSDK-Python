@@ -16,7 +16,7 @@ class GimbalMode(Enum):
           Yaw follow will point the gimbal to the vehicle heading
 
      YAW_LOCK
-          Yaw lock will fix the gimbal poiting to an absolute direction
+          Yaw lock will fix the gimbal pointing to an absolute direction
 
      """
 
