@@ -4,11 +4,15 @@ import asyncio
 
 from mavsdk import System
 from mavsdk.mission import (MissionItem, MissionPlan)
+from mavsdk.lights import (LightsError, LightMatrix, LightStrip)
 
 
 async def run():
     drone = System()
-    await drone.connect(system_address="udp://:14540")
+    # You'll need to route mavlink messages to the Lights.
+    # So connect to MAVLink Router, and let it do out the routing.
+    # (https://docs.px4.io/main/en/simulation/#use-mavlink-router)
+    await drone.connect(system_address="tcp://:5760") 
 
     print("Waiting for drone to connect...")
     async for state in drone.core.connection_state():
@@ -90,10 +94,32 @@ async def run():
 
 
 async def print_mission_progress(drone):
+
+    MissionColors = {
+        "RED": 0x00FF0000,
+        "YELLOW": 0x00FFFF00,
+        "GREEN": 0x0000FF00,
+        "BLUE": 0x000000FF,
+        "PURPLE": 0x00FF00FF,
+        "CYAN": 0x0000FFFF,
+        "WHITE": 0x00FFFFFF,
+    }
+
     async for mission_progress in drone.mission.mission_progress():
         print(f"Mission progress: "
               f"{mission_progress.current}/"
               f"{mission_progress.total}")
+        
+        print(f"-- Turn lights { list(MissionColors.keys())[mission_progress.current] }")
+        strip = LightStrip(
+            [ list(MissionColors.values())[mission_progress.current] for _ in range(8) ]
+        )
+
+        matrix = LightMatrix([strip for _ in range(4)])
+        try:
+            await drone.lights.set_matrix(matrix)
+        except LightsError as error:
+            print(f"Setting lights failed: {error._result.result}")
 
 
 async def observe_is_in_air(drone, running_tasks):
@@ -113,6 +139,10 @@ async def observe_is_in_air(drone, running_tasks):
                     await task
                 except asyncio.CancelledError:
                     pass
+                
+            print("-- Landed")
+            await drone.lights.follow_flight_mode(True)
+
             await asyncio.get_event_loop().shutdown_asyncgens()
 
             return
